@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssaggregate"
+version = "0.1.0"
+authors = [
+  { name="Gabriel Richard", email="gabriel.louis.richard@gmail.com" },
+]
+description = "Create industry-level aggregates for shift-share IV"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pandas>=1.3.0",
+    "numpy>=1.20.0",
+    "pyfixest>=0.13.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/RichieG48/ssaggregate"
