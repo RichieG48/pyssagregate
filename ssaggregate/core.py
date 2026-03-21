@@ -9,6 +9,66 @@ def ssaggregate(data: pd.DataFrame, vars_list: list, n: str, s: str,
     """
     Converts "location-level" variables in a shift-share IV dataset to a dataset 
     of exposure-weighted "industry-level" aggregates.
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The main dataset containing location-level variables to be aggregated.
+        Conditional on any sample restrictions, there should be no missing values 
+        for the location-level variables being aggregated.
+
+    vars_list : list of str
+        A list of column names in `data` representing the variables (e.g., 
+        outcomes and endogenous variables) that will be residualized and aggregated.
+    
+    n : str
+        The variable name indicating industry (or shock) identifiers. 
+        In "long" format, this is a column in the `shares` dataset. 
+        In "wide" format, this will be the name of the newly created industry 
+        identifier column in the output.
+    
+    s : str
+        The variable name indicating the exposure weight. 
+        In "long" format, this is the column name in `shares` containing the weights. 
+        In "wide" format, this should denote the common prefix (stub name) of the 
+        exposure weight columns in `data` (e.g., "share_" if columns are named 
+        "share_101", "share_102").
+    
+    shares : pd.DataFrame, optional
+        The shares dataset, used only for the "long" format. Each row should be 
+        uniquely indexed by the variables in `l` and `n` (and `t`, when specified). 
+        If None, the function assumes shares are in "wide" format inside `data`.
+    
+    l : str, optional
+        The variable name indicating location identifiers. Required if using the 
+        "long" format. Must be None if using the "wide" format.
+    
+    t : str, optional
+        The variable name indicating period (time) identifiers. Required if the 
+        data is a panel or repeated cross-section.
+    
+    weights : str, optional
+        The variable name in `data` indicating population or regression weights 
+        used to weight locations during residualization and final aggregation.
+    
+    controls : str, default "1"
+        A `pyfixest` formula string specifying control variables and fixed effects 
+        that will be partialled out from the variables in `vars_list` prior to 
+        aggregation. Fixed effects should be specified after a "|". 
+        Example: "demographic_var + i(state) | year"
+    
+    addmissing : bool, default False
+        If True, creates a "missing industry" observation with exposure weights 
+        equal to one minus the sum of a location's exposure weights. Recommended 
+        when the sum of exposure weights varies across locations and the sum of 
+        shares is not explicitly controlled for.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame of exposure-weighted "industry-level" aggregates. The dataset 
+        will contain the control-residualized, exposure-weighted averages of the 
+        location-level variables, along with the global normalized average exposure 
+        weight `s_n`. It is indexed by the variables in `n` (and `t`, if specified).
     """
     df = data.copy()
     sh = shares.copy() if shares is not None else None
