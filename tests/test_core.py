@@ -3,6 +3,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import warnings
 import pytest
 import pandas as pd
 import numpy as np
@@ -114,3 +115,26 @@ def test_residualization_with_controls(sample_data):
     
     # The aggregated y values should differ because 'y' was residualized against 'c'
     assert not np.allclose(res_no_controls['y'], res_with_controls['y'])
+def test_no_warning_with_complete_shares(sample_data):
+    """Shares summing to one in every location should not trigger the incomplete-share warning."""
+    df, shares = sample_data
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ssaggregate(data=df, vars_list=['y'], n='n', s='s', shares=shares, l='l', t='t')
+
+def test_wide_format_stub_is_prefix(sample_data):
+    """Only columns starting with the stub are treated as shares."""
+    df, shares = sample_data
+
+    shares_wide = shares.pivot(index=['l', 't'], columns='n', values='s').reset_index()
+    shares_wide = shares_wide.rename(columns={'A': 'emp_A', 'B': 'emp_B'})
+    df_wide = df.merge(shares_wide, on=['l', 't'])
+    df_wide['unemp_rate'] = [0.1, 0.2, 0.3, 0.4]
+
+    res = ssaggregate(
+        data=df_wide, vars_list=['y', 'unemp_rate'], n='industry_id', s='emp_', t='t'
+    )
+
+    assert set(res['industry_id']) == {'A', 'B'}
+    assert 'unemp_rate' in res.columns

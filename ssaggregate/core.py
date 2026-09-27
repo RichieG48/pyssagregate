@@ -84,7 +84,7 @@ def ssaggregate(data: pd.DataFrame, vars_list: list, n: str, s: str,
         
         keep_cols = ["location_ids"]
         if t: keep_cols.append(t)
-        share_cols = [c for c in df.columns if s in c]
+        share_cols = [c for c in df.columns if c.startswith(s)]
         keep_cols.extend(share_cols)
 
         sh = df[keep_cols].copy()
@@ -93,14 +93,16 @@ def ssaggregate(data: pd.DataFrame, vars_list: list, n: str, s: str,
         if t: id_vars.append(t)
         
         sh = sh.melt(id_vars=id_vars, value_vars=share_cols, var_name=n, value_name=s)
-        sh[n] = sh[n].astype(str).str.replace(s, "")
+        sh[n] = sh[n].astype(str).str[len(s):]
 
     # 2. Check controls / sum of shares varying
-    check_controls = sh[s].std() > 1e-5
     groupby_cols = [l] if t is None else [l, t]
 
     sh_missing = sh.groupby(groupby_cols, as_index=False)[s].sum()
     sh_missing[s] = 1.0 - sh_missing[s]
+
+    # Incomplete share case: the sum of shares varies across locations
+    check_controls = sh_missing[s].std() > 1e-5
 
     if addmissing:
         sh_missing[n] = np.nan
@@ -133,7 +135,7 @@ def ssaggregate(data: pd.DataFrame, vars_list: list, n: str, s: str,
 
     # 4. Merge and calculate exposure-weighted aggregates
     if wideformat:
-        df = df.drop(columns=[c for c in df.columns if s in c])
+        df = df.drop(columns=share_cols)
 
     merged = df.merge(sh, on=groupby_cols)
 
