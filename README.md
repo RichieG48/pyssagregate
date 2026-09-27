@@ -17,7 +17,7 @@ so controls and high-dimensional fixed effects use the familiar formula syntax.
 ## Installation
 
 ```bash
-pip install git+https://github.com/RichieG48/ssaggregate.git
+pip install git+https://github.com/RichieG48/pyssagregate.git
 ```
 
 Depends on `pandas`, `numpy` and `pyfixest` (recent pyfixest releases require Python ≥ 3.10).
